@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BEZPRAWIE - Anarchia Minecraft</title>
+<style>
+body { background: #0a0a0a; color: white; font-family: Arial; text-align: center; margin-top: 15%; }
+h1 { font-size: 80px; background: linear-gradient(to right, red, orange); -webkit-background-clip: text; color: transparent; }
+.ip { background: #1a1a1a; padding: 20px; font-size: 30px; border: 2px solid red; display: inline-block; cursor: pointer;}
+a { color: orange; text-decoration: none; font-size: 20px; }
+</style>
+</head>
+<body>
+<h1>BEZPRAWIE</h1>
+<h2>0 ZASAD. 0 LITOŚCI. 100% ANARCHIA</h2>
+<div class="ip" onclick="navigator.clipboard.writeText('bezprawie.falixsrv.me'); alert('Skopiowano IP!')">IP: bezprawie.falixsrv.me</div>
+<br><br>
+<a href="https://dc.bezprawie.pl">>> WEJDŹ NA DISCORD <<</a>
+</body>
+</html>

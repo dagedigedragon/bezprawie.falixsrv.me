@@ -1,74 +1,51 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BEZPRAWIE - Prawdziwa Anarchia Minecraft</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#070709;color:white;font-family:'Inter',sans-serif;overflow-x:hidden}
-.bg{position:fixed;inset:0;background:radial-gradient(circle at 20% 30%, #ff1a001a, transparent 40%), radial-gradient(circle at 80% 70%, #ff88001a, transparent 40%), #070709;z-index:-1}
-nav{display:flex;justify-content:space-between;align-items:center;padding:20px 6%;}
-.logo{font-family:'Orbitron';font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,#ff0000,#ff7a00);-webkit-background-clip:text;color:transparent;font-size:22px}
-.hero{text-align:center;padding:70px 20px 40px}
-.hero h1{font-family:'Orbitron';font-size:clamp(50px,12vw,130px);line-height:0.9;background:linear-gradient(90deg,#ff0000 0%,#ff4d00 30%,#ffaa00 60%,#ff8800 100%);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 0 40px #ff000055);animation:glow 3s infinite alternate}
-@keyframes glow{from{filter:drop-shadow(0 0 20px #ff000044)} to{filter:drop-shadow(0 0 50px #ff550088)}}
-.hero p{margin-top:20px;color:#aaa;letter-spacing:6px;font-size:14px}
-.ip-box{margin:40px auto 0;background:#111113;border:1px solid #222;border-radius:16px;padding:8px 8px 8px 24px;display:flex;align-items:center;gap:20px;max-width:500px;box-shadow:0 10px 40px #000}
-.ip-box span{font-weight:700;font-size:18px}
-.ip-box button{margin-left:auto;background:linear-gradient(90deg,#ff0000,#ff7a00);border:none;color:white;padding:14px 28px;border-radius:12px;font-weight:800;cursor:pointer;transition:0.2s}
-.ip-box button:hover{transform:scale(1.05)}
-.buttons{display:flex;gap:15px;justify-content:center;margin-top:25px;flex-wrap:wrap}
-.btn{padding:16px 32px;border-radius:12px;font-weight:800;text-decoration:none;display:inline-block;transition:0.2s}
-.btn-discord{background:#5865F2;color:white}
-.btn-store{background:#1a1a1e;border:1px solid #2a2a2e;color:white}
-.btn:hover{transform:translateY(-3px)}
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:1100px;margin:80px auto;padding:0 6%}
-.card{background:#111113;border:1px solid #1e1e22;border-radius:20px;padding:30px;text-align:left}
-.card h3{font-family:'Orbitron';margin-bottom:10px;font-size:18px}
-.card p{color:#888;font-size:14px;line-height:1.6}
-.card .icon{font-size:32px;margin-bottom:15px}
-footer{text-align:center;padding:60px 20px;color:#444;font-size:12px}
-</style>
-</head>
-<body>
-<div class="bg"></div>
-<nav><div class="logo">BEZPRAWIE</div><div style="color:#666;font-size:12px">1.16 - 1.21.x</div></nav>
+from flask import Flask, render_template_string, request
+import json, os, time
+app = Flask(__name__)
 
-<div class="hero">
-<h1>BEZPRAWIE</h1>
-<p>0 ZASAD • 0 LITOŚCI • 100% ANARCHIA</p>
+DB = "gracze.json" # tu będzie zapisany czas
 
-<div class="ip-box">
-<span id="ip-text">bezprawie.falixsrv.me</span>
-<button onclick="copyIP()">KOPIUJ IP</button>
-</div>
+def load_db():
+    if not os.path.exists(DB): return {}
+    return json.load(open(DB))
 
-<div class="buttons">
-<a class="btn btn-discord" href="https://discord.gg/kqb7RqY9f" target="_blank">DOŁĄCZ NA DISCORD</a>
-<a class="btn btn-store" href="https://discord.gg/kqb7RqY9f">SKLEP / REGULAMIN</a>
-</div>
-</div>
+def save_db(data):
+    json.dump(data, open(DB, "w"))
 
-<div class="features">
-<div class="card"><div class="icon">💣</div><h3>100% GRIEF</h3><p>Niszcz bazy, palaj wioski, okradaj innych. Mapa nigdy nie ma resetu. Wszystko co zbudujesz może zostać zniszczone.</p></div>
-<div class="card"><div class="icon">⚔️</div><h3>PVP BEZ LIMITU</h3><p>Brak stref bezpiecznych. Walka wszędzie, zawsze. Tylko najsilniejsi przetrwają noc.</p></div>
-<div class="card"><div class="icon">💰</div><h3>EKONOMIA GRACZY</h3><p>Twój loot to Twoja waluta. Handluj, buduj farmy i zdominuj rynek serwera.</p></div>
-</div>
+# Twoja ładna strona z logowaniem
+HTML = """
+<h1>BEZPRAWIE - Panel Gracza</h1>
+<form method="POST">
+Nick: <input name="nick"><br>
+Kod z gry /polacz: <input name="kod"><br>
+<button>Połącz konto</button>
+</form>
+{% if gracz %}
+<hr>
+Witaj {{gracz.nick}}! Twój czas: {{gracz.czas}}h<br>
+<a href="/kup?vip">KUP VIP za 10h</a> | <a href="/kup?skrzynka">KUP Skrzynke AFK za 2h</a>
+{% endif %}
+"""
 
-<footer>
-&copy; 2026 BEZPRAWIE - Nie jesteśmy powiązani z Mojang AB.<br>IP: bezprawie.falixsrv.me | Discord: discord.gg/kqb7RqY9f
-</footer>
+@app.route("/", methods=["GET","POST"])
+def index():
+    db = load_db()
+    gracz = None
+    if request.method == "POST":
+        nick = request.form["nick"]
+        kod = request.form["kod"]
+        # tu sprawdzasz czy kod z gry = kod ze strony
+        if nick in db and db[nick]["kod"] == kod:
+            gracz = {"nick": nick, "czas": db[nick]["czas"]}
+    return render_template_string(HTML, gracz=gracz)
 
-<script>
-function copyIP(){
-navigator.clipboard.writeText("bezprawie.falixsrv.me");
-let btn=document.querySelector(".ip-box button");
-let old=btn.innerText;
-btn.innerText="SKOPIOWANO!";
-setTimeout(()=>btn.innerText=old,2000);
-}
-</script>
-</body>
-</html>
+# API do którego Twój plugin na serwerze będzie wysyłać czas
+@app.route("/api/update", methods=["POST"])
+def update():
+    # plugin wysyła: {"nick":"Kowalski", "czas": 12.5, "kod":"A7B9K2"}
+    data = request.json
+    db = load_db()
+    db[data["nick"]] = data
+    save_db(db)
+    return {"ok": True}
+
+app.run(host="0.0.0.0", port=10000)

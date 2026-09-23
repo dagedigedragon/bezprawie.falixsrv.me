@@ -1,0 +1,51 @@
+from flask import Flask, render_template_string, request
+import json, os, time
+app = Flask(__name__)
+
+DB = "gracze.json" # tu będzie zapisany czas
+
+def load_db():
+    if not os.path.exists(DB): return {}
+    return json.load(open(DB))
+
+def save_db(data):
+    json.dump(data, open(DB, "w"))
+
+# Twoja ładna strona z logowaniem
+HTML = """
+<h1>BEZPRAWIE - Panel Gracza</h1>
+<form method="POST">
+Nick: <input name="nick"><br>
+Kod z gry /polacz: <input name="kod"><br>
+<button>Połącz konto</button>
+</form>
+{% if gracz %}
+<hr>
+Witaj {{gracz.nick}}! Twój czas: {{gracz.czas}}h<br>
+<a href="/kup?vip">KUP VIP za 10h</a> | <a href="/kup?skrzynka">KUP Skrzynke AFK za 2h</a>
+{% endif %}
+"""
+
+@app.route("/", methods=["GET","POST"])
+def index():
+    db = load_db()
+    gracz = None
+    if request.method == "POST":
+        nick = request.form["nick"]
+        kod = request.form["kod"]
+        # tu sprawdzasz czy kod z gry = kod ze strony
+        if nick in db and db[nick]["kod"] == kod:
+            gracz = {"nick": nick, "czas": db[nick]["czas"]}
+    return render_template_string(HTML, gracz=gracz)
+
+# API do którego Twój plugin na serwerze będzie wysyłać czas
+@app.route("/api/update", methods=["POST"])
+def update():
+    # plugin wysyła: {"nick":"Kowalski", "czas": 12.5, "kod":"A7B9K2"}
+    data = request.json
+    db = load_db()
+    db[data["nick"]] = data
+    save_db(db)
+    return {"ok": True}
+
+app.run(host="0.0.0.0", port=10000)
